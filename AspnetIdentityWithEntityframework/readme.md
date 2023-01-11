@@ -39,3 +39,26 @@ builder.Services.AddAuthentication("CookieAuth")
     });
 ~~~
 
+
+
+## 注册时 Email 确认
+
+- 配置
+
+ ~~~c#
+ builder.Services.AddIdentity<IdentityUser, IdentityRole>(config =>
+     {
+         config.Password.RequiredLength = 4;
+         config.Password.RequireDigit = false;
+         config.Password.RequireNonAlphanumeric = false;
+         config.Password.RequireUppercase = false;
+         config.SignIn.RequireConfirmedEmail = true; //开启确认邮件
+     })
+     .AddEntityFrameworkStores<AppDbContext>()
+     .AddDefaultTokenProviders();
+ ~~~
+
+
+
+
+

@@ -75,12 +75,18 @@ namespace AspnetIdentityWithEntityframework.Controllers
             if (result.Succeeded)
             {
                 //sign in
-                var signInResult = await _signInManager.PasswordSignInAsync(user, password, false, false);
+                // var signInResult = await _signInManager.PasswordSignInAsync(user, password, false, false);
+                //
+                // if (signInResult.Succeeded)
+                // {
+                //     return RedirectToAction("Index");
+                // }
 
-                if (signInResult.Succeeded)
-                {
-                    return RedirectToAction("Index");
-                }
+                var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
+
+                var link = Url.Action(nameof(VerifyEmail), "Home", new { userId = user.Id, code });
+
+                return RedirectToAction(nameof(EmailVerification));
             }
 
             return RedirectToAction("Index");
@@ -90,6 +96,13 @@ namespace AspnetIdentityWithEntityframework.Controllers
         {
             await _signInManager.SignOutAsync();
             return RedirectToAction("Index");
+        }
+
+        public IActionResult EmailVerification() => View();
+
+        public async Task<IActionResult> VerifyEmail(string userId, string code)
+        {
+            return View();
         }
     }
 }
