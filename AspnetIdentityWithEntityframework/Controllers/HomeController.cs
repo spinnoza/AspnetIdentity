@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using System.Diagnostics;
+using NETCore.MailKit.Core;
 
 namespace AspnetIdentityWithEntityframework.Controllers
 {
@@ -10,13 +11,16 @@ namespace AspnetIdentityWithEntityframework.Controllers
     {
         private readonly UserManager<IdentityUser> _userManager;
         private readonly SignInManager<IdentityUser> _signInManager;
+        private readonly IEmailService _emailService;
 
         public HomeController(
             UserManager<IdentityUser> userManager,
-            SignInManager<IdentityUser> signInManager)
+            SignInManager<IdentityUser> signInManager
+            ,IEmailService emailService)
         {
             _userManager = userManager;
             _signInManager = signInManager;
+            _emailService = emailService;
         }
 
         public IActionResult Index()
@@ -84,8 +88,10 @@ namespace AspnetIdentityWithEntityframework.Controllers
 
                 var code = await _userManager.GenerateEmailConfirmationTokenAsync(user);
 
-                var link = Url.Action(nameof(VerifyEmail), "Home", new { userId = user.Id, code });
+                var link = Url.Action(nameof(VerifyEmail), "Home", new { userId = user.Id, code },Request.Scheme,Request.Host.ToString());
 
+                await _emailService.SendAsync("test@test.com","email verify",$"<a href=\"{link}\">Verify email</a>",true);
+                
                 return RedirectToAction(nameof(EmailVerification));
             }
 
@@ -102,7 +108,21 @@ namespace AspnetIdentityWithEntityframework.Controllers
 
         public async Task<IActionResult> VerifyEmail(string userId, string code)
         {
-            return View();
+            var user = await _userManager.FindByIdAsync(userId);
+
+            if (user==null)
+            {
+                return BadRequest();
+            }
+
+            var result = await _userManager.ConfirmEmailAsync(user, code);
+
+            if (result.Succeeded)
+            {
+                return View();
+            }
+
+            return BadRequest();
         }
     }
 }
