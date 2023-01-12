@@ -32,12 +32,20 @@ namespace AspnetIdentity.Controllers
             return View();
         }
 
+
+        [Authorize(Policy = "Claim.DoB")]
+        public IActionResult SecretPolicy()
+        {
+            return View("Secret");
+        }
+
         public IActionResult Authenticate()
         {
             var grandmaClaims = new List<Claim>()
             {
                 new Claim(ClaimTypes.Name, "Bob"),
                 new Claim(ClaimTypes.Email, "Bob@fmail.com"),
+                new Claim(ClaimTypes.DateOfBirth,"2022-10-04"),
                 new Claim("Grandma.Says", "Very nice boi."),
             };
 

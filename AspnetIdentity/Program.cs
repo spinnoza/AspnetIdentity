@@ -1,7 +1,11 @@
+using System.Security.Claims;
+using AspnetIdentity.AuthorizationRequirements;
+using Microsoft.AspNetCore.Authorization;
+
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-builder.Services.AddControllersWithViews();
+
 
 builder.Services.AddAuthentication("CookieAuth")
     .AddCookie("CookieAuth", config =>
@@ -9,6 +13,35 @@ builder.Services.AddAuthentication("CookieAuth")
         config.Cookie.Name = "Grandmas.Cookie";
         config.LoginPath = "/Home/Authenticate";
     });
+
+builder.Services.AddAuthorization(config =>
+{
+    //var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+    //var defaultAuthPolicy = defaultAuthBuilder
+    //    .RequireAuthenticatedUser()
+    //    .RequireClaim(ClaimTypes.DateOfBirth)
+    //    .Build();
+
+    //config.DefaultPolicy = defaultAuthPolicy;
+
+    //config.AddPolicy("Claim.DoB", authPolicyBuilder =>
+    //{
+    //    authPolicyBuilder.RequireClaim(ClaimTypes.DateOfBirth);
+    //});
+
+    config.AddPolicy("Claim.DoB", authPolicyBuilder =>
+    {
+        //authPolicyBuilder.AddRequirements(new CustomRequireClaim(ClaimTypes.DateOfBirth));
+        authPolicyBuilder.RequireCustomClaim(ClaimTypes.DateOfBirth);
+    });
+
+
+});
+
+
+builder.Services.AddScoped<IAuthorizationHandler, CustomRequireClaimHandler>();
+
+builder.Services.AddControllersWithViews();
 
 
 var app = builder.Build();
