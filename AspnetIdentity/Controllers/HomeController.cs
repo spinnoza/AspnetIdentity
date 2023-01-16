@@ -10,10 +10,12 @@ namespace AspnetIdentity.Controllers
     public class HomeController : Controller
     {
         private readonly ILogger<HomeController> _logger;
+        private readonly IAuthorizationService _authorizationService;
 
-        public HomeController(ILogger<HomeController> logger)
+        public HomeController(ILogger<HomeController> logger,IAuthorizationService authorizationService)
         {
             _logger = logger;
+            _authorizationService = authorizationService;
         }
 
         public IActionResult Index()
@@ -69,6 +71,24 @@ namespace AspnetIdentity.Controllers
         public IActionResult Error()
         {
             return View(new ErrorViewModel { RequestId = Activity.Current?.Id ?? HttpContext.TraceIdentifier });
+        }
+
+
+        public async Task<IActionResult> DoStuff()
+        {
+            var builder = new AuthorizationPolicyBuilder("Schema");
+            var customPolicy = builder.RequireClaim("Hello").Build();
+
+            //Hello 为Policy Name
+            var authResult = await _authorizationService.AuthorizeAsync(User, customPolicy);
+
+            if (authResult.Succeeded)
+            {
+                //...
+            }
+
+            return View(nameof(Index));
+
         }
     }
 }

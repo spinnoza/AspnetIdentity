@@ -1,4 +1,4 @@
-## 简单的登录,生成cookie
+## 1.简单的登录,生成cookie
 
 - 加入cookie中间件
 
@@ -73,7 +73,7 @@ public IActionResult Secret()
 
 
 
-## Authorization Policy (授权策略)
+## 2.Authorization Policy (授权策略)
 
 - default policy,如果什么都不配置,那么久如同下面的代码一样
 
@@ -170,6 +170,41 @@ public IActionResult SecretPolicy()
     return View("Secret");
 }
 ~~~
+
+
+
+## 3.授权,验证一些扩展方法
+
+- 方法内进行权限判断
+
+~~~c#
+ //Hello 为Policy Name
+var authResult = await _authorizationService.AuthorizeAsync(User, "Hello");
+
+if (authResult.Succeeded)
+{
+    //...
+}
+~~~
+
+
+
+~~~c#
+ var builder = new AuthorizationPolicyBuilder("Schema");
+var customPolicy = builder.RequireClaim("Hello").Build();
+
+//Hello 为Policy Name
+var authResult = await _authorizationService.AuthorizeAsync(User, customPolicy);
+
+if (authResult.Succeeded)
+{
+    //...
+}
+~~~
+
+
+
+
 
 
 
