@@ -204,6 +204,105 @@ if (authResult.Succeeded)
 
 
 
+- 添加全局身份认证过滤器
+
+~~~ c#
+builder.Services.AddControllersWithViews(cofig =>
+{
+    var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+    var defaultAuthPolicy = defaultAuthBuilder
+        .RequireAuthenticatedUser()
+        .Build();
+
+    cofig.Filters.Add(new AuthorizeFilter(defaultAuthPolicy));
+});
+~~~
+
+
+
+- 利用系统内置的OperationAuthorizationRequirement(继承自IAuthorizationRequirement) 提供权限判断
+
+![image-20230118174122873](./assets/image-20230118174122873.png)
+
+利用该IAuthorizationRequirement 实施权限判断
+
+~~~ c#
+ public class OperationsController : Controller
+    {
+        private readonly IAuthorizationService _authorizationService;
+
+        public OperationsController(IAuthorizationService authorizationService)
+        {
+            _authorizationService = authorizationService;
+        }
+
+        public async Task<IActionResult> Open()
+        {
+            var cookieJar = new CookieJar(); // get cookie jar from db
+            await _authorizationService.AuthorizeAsync(User, cookieJar, CookieJarAuthOperations.Open);
+            return View();
+        }
+    }
+
+    public class CookieJarAuthorizationHandler
+        : AuthorizationHandler<OperationAuthorizationRequirement, CookieJar>
+    {
+        protected override Task HandleRequirementAsync(
+            AuthorizationHandlerContext context,
+            OperationAuthorizationRequirement requirement,
+            CookieJar cookieJar)
+        {
+            if (requirement.Name == CookieJarOperations.Look)
+            {
+                if (context.User.Identity!.IsAuthenticated)
+                {
+                    context.Succeed(requirement);
+                }
+            }
+            else if (requirement.Name == CookieJarOperations.ComeNear)
+            {
+                if (context.User.HasClaim("Friend", "Good"))
+                {
+                    context.Succeed(requirement);
+                }
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
+    public static class CookieJarAuthOperations
+    {
+        public static OperationAuthorizationRequirement Open = new OperationAuthorizationRequirement
+        {
+            Name = CookieJarOperations.Open
+        };
+    }
+
+    public static class CookieJarOperations
+    {
+        public static string Open = "Open";
+        public static string TakeCookie = "TakeCookie";
+        public static string ComeNear = "ComeNear";
+        public static string Look = "Look";
+    }
+
+    public class CookieJar
+    {
+        public string Name { get; set; } = null!;
+    }
+~~~
+
+
+
+
+
+
+
+
+
+
+
 
 
 

@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using AspnetIdentity.AuthorizationRequirements;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,7 +42,15 @@ builder.Services.AddAuthorization(config =>
 
 builder.Services.AddScoped<IAuthorizationHandler, CustomRequireClaimHandler>();
 
-builder.Services.AddControllersWithViews();
+builder.Services.AddControllersWithViews(cofig =>
+{
+    var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+    var defaultAuthPolicy = defaultAuthBuilder
+        .RequireAuthenticatedUser()
+        .Build();
+
+    cofig.Filters.Add(new AuthorizeFilter(defaultAuthPolicy));
+});
 
 
 var app = builder.Build();
