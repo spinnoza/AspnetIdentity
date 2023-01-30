@@ -1,4 +1,5 @@
-﻿using AspnetIdentity.Models;
+﻿using AspnetIdentity.CustomPolicyProvider;
+using AspnetIdentity.Models;
 using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -41,6 +42,19 @@ namespace AspnetIdentity.Controllers
             return View("Secret");
         }
 
+
+        [SecurityLevel(5)]
+        public IActionResult SecretLevel()
+        {
+            return View("Secret");
+        }
+
+        [SecurityLevel(10)]
+        public IActionResult SecretHigherLevel()
+        {
+            return View("Secret");
+        }
+
         public IActionResult Authenticate()
         {
             var grandmaClaims = new List<Claim>()
@@ -49,6 +63,7 @@ namespace AspnetIdentity.Controllers
                 new Claim(ClaimTypes.Email, "Bob@fmail.com"),
                 new Claim(ClaimTypes.DateOfBirth,"2022-10-04"),
                 new Claim("Grandma.Says", "Very nice boi."),
+                new Claim(DynamicPilicies.SecurityLevel, "7"),
             };
 
             var licenseClaims = new List<Claim>()
