@@ -5,6 +5,7 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
 using Newtonsoft.Json;
+using Microsoft.AspNetCore.Authorization;
 
 namespace Server.Controllers
 {
@@ -82,6 +83,19 @@ namespace Server.Controllers
             var responseJson = JsonConvert.SerializeObject(responseObject);
 
             return new JsonResult(responseObject);
+        }
+
+        [Authorize]
+        public IActionResult Validate()
+        {
+            
+
+            if (HttpContext.Request.Query.TryGetValue("access_token", out var accessToken))
+            {
+                //TODO:需要对access_token进行验证,这里暂时忽略
+                return Ok();
+            }
+            return BadRequest();
         }
     }
 }

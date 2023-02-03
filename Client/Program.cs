@@ -52,6 +52,7 @@ builder.Services.AddAuthentication(config => {
             }
         };
     });
+builder.Services.AddHttpClient();
 
 var app = builder.Build();
 

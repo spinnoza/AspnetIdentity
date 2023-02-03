@@ -66,6 +66,10 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
 ### 2.oauth2.0  Authorization Code Grant
 
+
+
+![image-20230203130710744](./assets/image-20230203130710744.png)
+
 **Client**
 
 ~~~ c#
@@ -196,6 +200,115 @@ builder.Services.AddAuthentication(config => {
         }
     }
 ~~~
+
+
+
+### 3.增加 api 资源
+
+client访问受限的api资源,需要先在auth Server 端进行登录,获取token后携带token 访问api,api 检查token中间件会检查request中的token并向auth Server端进行验证(初始代码基于上面的2( Authorization Code Grant))
+
+**api端**
+
+~~~c#
+builder.Services.AddAuthorization(config =>
+{
+    var defaultAuthBuilder = new AuthorizationPolicyBuilder();
+    var defaultAuthPolicy = defaultAuthBuilder
+        .AddRequirements(new JwtRequirement())
+        .Build();
+
+    config.DefaultPolicy = defaultAuthPolicy;
+});
+
+builder.Services.AddScoped<IAuthorizationHandler, JwtRequirementHandler>();
+~~~
+
+
+
+~~~c#
+ public class JwtRequirement : IAuthorizationRequirement { }
+
+    public class JwtRequirementHandler : AuthorizationHandler<JwtRequirement>
+    {
+        private readonly HttpClient _client;
+        private readonly HttpContext _httpContext;
+
+        public JwtRequirementHandler(
+            IHttpClientFactory httpClientFactory,
+            IHttpContextAccessor httpContextAccessor)
+        {
+            _client = httpClientFactory.CreateClient();
+            _httpContext = httpContextAccessor.HttpContext!;
+        }
+
+        protected override async Task HandleRequirementAsync(
+            AuthorizationHandlerContext context,
+            JwtRequirement requirement)
+        {
+            if (_httpContext.Request.Headers.TryGetValue("Authorization", out var authHeader))
+            {
+                var accessToken = authHeader.ToString().Split(' ')[1];
+
+                //拿出access_token ,发送给授权服务器进行验证
+                var response = await _client
+                    .GetAsync($"https://localhost:7265/oauth/validate?access_token={accessToken}");
+
+                if (response.StatusCode == System.Net.HttpStatusCode.OK)
+                {
+                    context.Succeed(requirement);
+                }
+            }
+        }
+    }
+~~~
+
+
+
+**Auth Server端**
+
+~~~c#
+[Authorize]
+public IActionResult Validate()
+{
+
+
+    if (HttpContext.Request.Query.TryGetValue("access_token", out var accessToken))
+    {
+        //TODO:需要对access_token进行验证,这里暂时忽略
+        return Ok();
+    }
+    return BadRequest();
+}
+~~~
+
+
+
+**Client端**
+
+~~~c#
+[Authorize]
+public async Task<IActionResult> Secret()
+{
+    var token = await HttpContext.GetTokenAsync("access_token");
+
+    _client.DefaultRequestHeaders.Add("Authorization", $"Bearer {token}");
+
+    //var serverResponse = await _client.GetAsync("https://localhost:7265/secret/index");
+    //var serverMessage = await serverResponse.Content.ReadAsStringAsync();
+
+
+    var apiResponse = await _client.GetAsync("https://localhost:7103/secret/index");
+    var apiMessage = await apiResponse.Content.ReadAsStringAsync();
+
+    return View();
+}
+~~~
+
+
+
+
+
+
 
 
 
