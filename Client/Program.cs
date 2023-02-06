@@ -24,8 +24,10 @@ builder.Services.AddAuthentication(config => {
          config.CallbackPath = new PathString("/authorization-code/callback");
         config.AuthorizationEndpoint = "https://localhost:7265/oauth/authorize";
         config.TokenEndpoint = "https://localhost:7265/oauth/token";
+        
 
         config.SaveTokens = true;
+        
 
         config.Events = new OAuthEvents()
         {

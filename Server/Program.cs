@@ -30,9 +30,11 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
 
         config.TokenValidationParameters = new TokenValidationParameters()
         {
+            ClockSkew = TimeSpan.Zero,
             ValidIssuer = Constants.Issuer,
             ValidAudience = Constants.Audiance,
             IssuerSigningKey = key,
+            
         };
     });
 

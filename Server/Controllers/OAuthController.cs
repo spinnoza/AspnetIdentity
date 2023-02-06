@@ -6,6 +6,7 @@ using System.Security.Claims;
 using System.Text;
 using Newtonsoft.Json;
 using Microsoft.AspNetCore.Authorization;
+using Server.Models;
 
 namespace Server.Controllers
 {
@@ -43,11 +44,14 @@ namespace Server.Controllers
             return Redirect($"{redirectUri}{query.ToString()}");
         }
 
+        [HttpPost]
         public async Task<IActionResult> Token(
-            string grant_type, // flow of access_token request
-            string code, // confirmation of the authentication process
-            string redirect_uri,
-            string client_id)
+            //string grant_type, // flow of access_token request
+            //string code, // confirmation of the authentication process
+            //string redirect_uri,
+            //string client_id,
+            //string refresh_token
+            [FromForm] TokenModel tokenModel)
         {
             // some mechanism for validating the code
 
@@ -68,7 +72,10 @@ namespace Server.Controllers
                 Constants.Audiance,
                 claims,
                 notBefore: DateTime.Now,
-                expires: DateTime.Now.AddHours(1),
+                  // expires: DateTime.Now.AddHours(1),
+                expires: tokenModel.grant_type == "refresh_token"
+                    ? DateTime.Now.AddMinutes(5)
+                    : DateTime.Now.AddMilliseconds(1),
                 signingCredentials);
 
             var access_token = new JwtSecurityTokenHandler().WriteToken(token);
@@ -77,12 +84,56 @@ namespace Server.Controllers
             {
                 access_token,
                 token_type = "Bearer",
-                raw_claim = "oauthTutorial"
+                raw_claim = "oauthTutorial",
+                refresh_token = "RefreshTokenSampleValueSomething77"
             };
 
             var responseJson = JsonConvert.SerializeObject(responseObject);
 
             return new JsonResult(responseObject);
+        }
+
+        [HttpPost]
+        public IActionResult Token2([FromForm]TokenModel tokenModel)
+        {
+            var claims = new[]
+            {
+                new Claim(JwtRegisteredClaimNames.Sub, "some_id"),
+                new Claim("granny", "cookie")
+            };
+
+            var secretBytes = Encoding.UTF8.GetBytes(Constants.Secret);
+            var key = new SymmetricSecurityKey(secretBytes);
+            var algorithm = SecurityAlgorithms.HmacSha256;
+
+            var signingCredentials = new SigningCredentials(key, algorithm);
+
+            var token = new JwtSecurityToken(
+                Constants.Issuer,
+                Constants.Audiance,
+                claims,
+                notBefore: DateTime.Now,
+                // expires: DateTime.Now.AddHours(1),
+                expires: tokenModel.grant_type == "refresh_token"
+                    ? DateTime.Now.AddMinutes(5)
+                    : DateTime.Now.AddMilliseconds(1),
+                signingCredentials);
+
+            var access_token = new JwtSecurityTokenHandler().WriteToken(token);
+
+            var responseObject = new
+            {
+                access_token,
+                token_type = "Bearer",
+                raw_claim = "oauthTutorial",
+                refresh_token = "RefreshTokenSampleValueSomething77"
+            };
+
+            var responseJson = JsonConvert.SerializeObject(responseObject);
+
+            return new JsonResult(responseObject);
+
+           // return new  OkResult();
         }
 
         [Authorize]

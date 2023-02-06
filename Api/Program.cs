@@ -1,4 +1,6 @@
+using Api;
 using Api.AuthRequirement;
+using Microsoft.AspNetCore.Authentication;
 using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -6,7 +8,8 @@ var builder = WebApplication.CreateBuilder(args);
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddAuthentication();
+builder.Services.AddAuthentication("DefaultAuth")
+    .AddScheme<AuthenticationSchemeOptions, CustomeAuthenticationHandler>("DefaultAuth", null);
 
 builder.Services.AddAuthorization(config =>
 {
