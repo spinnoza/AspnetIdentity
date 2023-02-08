@@ -1,15 +1,23 @@
-using IdentityServer;
-
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
 builder.Services.AddControllersWithViews();
 
-builder.Services.AddIdentityServer()
-    .AddInMemoryIdentityResources(Configuration.GetIdentityResources())
-    .AddInMemoryApiScopes(Configuration.GetScopes())
-    .AddInMemoryClients(Configuration.GetClients())
-    .AddDeveloperSigningCredential();
+builder.Services.AddAuthentication(config => {
+        config.DefaultScheme = "Cookie";
+        config.DefaultChallengeScheme = "oidc";
+    })
+    .AddCookie("Cookie")
+    .AddOpenIdConnect("oidc", config => {
+        config.Authority = "https://localhost:7227/";
+        config.ClientId = "client_id_mvc";
+        config.ClientSecret = "client_secret_mvc";
+        config.SaveTokens = true;
+
+        config.ResponseType = "code";
+
+        
+    });
 
 var app = builder.Build();
 
@@ -25,10 +33,12 @@ app.UseHttpsRedirection();
 app.UseStaticFiles();
 
 app.UseRouting();
-app.UseIdentityServer();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
 app.UseEndpoints(endpoints =>
 {
     endpoints.MapDefaultControllerRoute();
 });
-
 app.Run();
